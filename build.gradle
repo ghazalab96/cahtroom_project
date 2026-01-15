@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group 'at.ac.hcw'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+// Configuration for JavaFX
+javafx {
+    version = "21" // Matches your OpenJDK 21
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+// Points to your Client Main Class
+application {
+    mainClass = 'at.ac.hcw.chat.client.ChatApplication'
+}
+
+dependencies {
+    // Basic Java unit testing (optional)
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
+}
+
+test {
+    useJUnitPlatform()
+}
