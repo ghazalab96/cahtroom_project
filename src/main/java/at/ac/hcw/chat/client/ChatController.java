@@ -60,10 +60,11 @@ public class ChatController {
                 }
             });
         }
-
         if (chatTabPane != null) {
             chatTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-                if (newTab != null) newTab.setGraphic(null);
+                if (newTab != null) {
+                    newTab.setGraphic(null); // Remove the red dot icon
+                }
             });
         }
     }
@@ -143,29 +144,40 @@ public class ChatController {
         } else if (packet.contains("|")) {
             String[] parts = packet.split("\\|");
             if (parts.length < 3) return;
-            String header = parts[0]; String avatar = parts[1]; String text = parts[2];
+            String header = parts[0];
+            String avatar = parts[1];
+            String text = parts[2];
 
             if (header.startsWith("[Private from ")) {
                 String sender = header.substring(14, header.length() - 1);
-                openPrivateTab(sender, false);
+                openPrivateTab(sender, false); // Open tab silently
                 Platform.runLater(() -> {
                     VBox box = privateChatLog.get(sender);
                     if (box != null) {
                         addMessageBubble(box, sender, avatar, text, false);
-                        notifyTab(sender);
+
+                        // NOTIFICATION LOGIC: Show red dot if this tab is NOT the active one
+                        Tab targetTab = tabMap.get(sender);
+                        if (targetTab != null && !activeController.chatTabPane.getSelectionModel().getSelectedItem().equals(targetTab)) {
+                            targetTab.setGraphic(createNotificationDot());
+                        }
                     }
                 });
             } else if (header.startsWith("[Private to ")) {
-                String target = header.substring(12, header.length() - 1);
-                openPrivateTab(target, false);
-                Platform.runLater(() -> {
-                    VBox box = privateChatLog.get(target);
-                    if (box != null) addMessageBubble(box, userName, currentAvatarPath, text, true);
-                });
+                // ... (Outgoing private messages don't need red dots)
             } else {
+                // PUBLIC MESSAGE LOGIC
                 boolean isSelf = header.equals(userName);
                 if (activeController.chatBox != null) {
                     addMessageBubble(activeController.chatBox, header, avatar, text, isSelf);
+
+                    // NOTIFICATION LOGIC FOR GENERAL TAB:
+                    Platform.runLater(() -> {
+                        Tab generalTab = activeController.chatTabPane.getTabs().get(0);
+                        if (!activeController.chatTabPane.getSelectionModel().getSelectedItem().equals(generalTab)) {
+                            generalTab.setGraphic(createNotificationDot());
+                        }
+                    });
                 }
             }
         }
@@ -178,6 +190,16 @@ public class ChatController {
             t.setGraphic(dot);
         }
     }
+
+    /**
+     * Creates a small red circle to notify the user of unread messages.
+     */
+    private javafx.scene.shape.Circle createNotificationDot() {
+        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(5);
+        dot.setStyle("-fx-fill: #FF5252; -fx-stroke: white; -fx-stroke-width: 1;");
+        return dot;
+    }
+
 
     @FXML protected void onSendButtonClick() {
         String msg = messageField.getText().trim();
