@@ -1,14 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
+<!--
+    The Error View FXML: A specialized modal window used for alerting the user of network failure.
+    It uses standard JavaFX controls to create a clean, non-intrusive popup.
+-->
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="CONTROLLER_NAME"
-            prefHeight="400.0" prefWidth="600.0">
+<!--
+    VBox: Root container for the error message.
+    spacing="15": Vertical gap between the icon, the text, and the button.
+    alignment="CENTER": Ensures the warning content is perfectly centered in the popup.
+    style:
+        -fx-background-color: #FFF5F5 (A very soft, desaturated red to indicate an error state).
+        -fx-background-radius: 20 (Stronger rounding for a modern "dialog box" look).
+        -fx-border-color: #FFCDD2 (A subtle pinkish-red border to define the window edges).
+    fx:controller: Reuses the ChatController to handle the "Return to Login" logic.
+-->
+<VBox spacing="15" alignment="CENTER"
+      style="-fx-background-color: #FFF5F5; -fx-background-radius: 20; -fx-border-color: #FFCDD2; -fx-border-radius: 20;"
+      xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="at.ac.hcw.chat.client.ChatController">
 
-</AnchorPane>
+    <!-- padding: Generates a 30-pixel safety margin around the content inside the box -->
+    <padding>
+        <Insets top="30" right="30" bottom="30" left="30"/>
+    </padding>
+
+    <!--
+        Main Warning Label:
+        Includes a Unicode emoji (⚠️) and the primary error message.
+        textFill="#E57373": Uses a muted red color to signify danger without being too harsh on the eyes.
+    -->
+    <Label text="⚠️ Connection Lost" textFill="#E57373">
+        <font>
+            <!-- System Bold Font at 18px to ensure the title is the most prominent element -->
+            <Font name="System Bold" size="18.0"/>
+        </font>
+    </Label>
+
+    <!-- Secondary Label: Provides a brief explanation of what happened to the connection -->
+    <Label text="The server has disconnected." textFill="#795548" />
+
+    <!--
+        Return Button:
+        onAction="#onDisconnectButtonClick": This links to the method in ChatController.java.
+        Even though it's an error, we reuse the Disconnect logic because it safely closes
+        any remaining socket resources and switches the UI back to the login screen.
+        style:
+            -fx-background-color: #78909C (Muted blue-grey to match the primary application theme).
+            -fx-background-radius: 15 (Rounded corners consistent with the rest of the app).
+            -fx-cursor: hand (Visual feedback that the button is clickable).
+    -->
+    <Button text="Back to Login" onAction="#onDisconnectButtonClick"
+            prefWidth="140"
+            style="-fx-background-color: #78909C; -fx-text-fill: white; -fx-background-radius: 15; -fx-cursor: hand;" />
+</VBox>
