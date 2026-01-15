@@ -65,6 +65,7 @@
             -fx-background-radius: 20 (Strongly rounded corners).
             -fx-cursor: hand (Shows the pointer as a hand for better user feedback).
     -->
+
     <Button fx:id="connectButton" text="Connect" onAction="#onConnectButtonClick"
             prefWidth="250" prefHeight="40"
             style="-fx-background-color: #78909C; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-weight: bold; -fx-cursor: hand;"/>
