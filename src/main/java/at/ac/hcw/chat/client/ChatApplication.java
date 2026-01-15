@@ -1,4 +1,4 @@
-package ac.at.hcw.chat.client;
+package at.ac.hcw.chat.client;
 
 public class ChatApplication {
 }
