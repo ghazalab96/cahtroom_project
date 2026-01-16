@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    Modern Chat View with Bubble Support.
+    Layout: VBox (Root) -> HBox (Header) -> HBox (Content) -> HBox (Footer)
+-->
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.image.ImageView?>
+
+
+<VBox prefHeight="600.0" prefWidth="800.0" spacing="10"
+      style="-fx-background-color: #F4F7F9;"
+      stylesheets="@style.css"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="at.ac.hcw.chat.client.ChatController">
+
+    <padding>
+        <Insets bottom="15" left="15" right="15" top="15" />
+    </padding>
+
+    <!-- Header: User Identity and Disconnect -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <children>
+            <StackPane>
+                <!-- این دایره پشت عکس قرار می‌گیرد -->
+                <Circle radius="20" fill="WHITE" stroke="#CFD8DC" />
+
+                <!-- این عکس پنگوئن شماست -->
+                <ImageView fx:id="userAvatarImage" fitHeight="35" fitWidth="35" pickOnBounds="true" preserveRatio="true" />
+            </StackPane>
+            <Label fx:id="welcomeLabel" style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #546E7A;" text="Connecting..." />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#onDisconnectButtonClick" style="-fx-background-color: #E57373; -fx-text-fill: white; -fx-background-radius: 15; -fx-cursor: hand;" text="Disconnect" />
+        </children>
+    </HBox>
+
+    <!-- Content Area -->
+    <HBox spacing="10" VBox.vgrow="ALWAYS">
+        <children>
+            <TabPane fx:id="chatTabPane" tabClosingPolicy="ALL_TABS" HBox.hgrow="ALWAYS">
+                <tabs>
+                    <Tab closable="false" text="General">
+                        <content>
+                            <!--
+                                ScrollPane: Necessary because VBox doesn't scroll by default.
+                                chatBox: The vertical container where message bubbles are injected.
+                            -->
+                            <ScrollPane fx:id="generalScroll" fitToWidth="true" style="-fx-background-color: white;">
+                                <content>
+                                    <VBox fx:id="chatBox" spacing="15" style="-fx-background-color: white; -fx-padding: 15;" />
+                                </content>
+                            </ScrollPane>
+                        </content>
+                    </Tab>
+                </tabs>
+            </TabPane>
+
+            <!-- Sidebar: Online Users -->
+            <VBox prefWidth="180.0" spacing="8">
+                <children>
+                    <Label style="-fx-font-size: 12; -fx-text-fill: #90A4AE; -fx-font-weight: bold;" text="Online Users" />
+                    <ListView fx:id="userListView" style="-fx-background-radius: 15;" VBox.vgrow="ALWAYS" />
+                </children>
+            </VBox>
+        </children>
+    </HBox>
+
+    <!-- Footer: Input and Send -->
+    <HBox alignment="CENTER" spacing="10">
+        <children>
+            <TextField fx:id="messageField" onAction="#onSendButtonClick" promptText="Type a message..." style="-fx-background-radius: 20; -fx-padding: 10;" HBox.hgrow="ALWAYS" />
+            <Button fx:id="sendButton" onAction="#onSendButtonClick" prefHeight="40.0" prefWidth="85.0" style="-fx-background-color: #78909C; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-weight: bold;" text="Send" />
+        </children>
+    </HBox>
+</VBox>

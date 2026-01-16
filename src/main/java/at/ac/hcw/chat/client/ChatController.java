@@ -131,9 +131,14 @@ public class ChatController {
         });
     }
 
+
+
+
     private void handleMessageRouting(String packet) {
         if (activeController == null) return;
+
         if (packet.startsWith("USERLIST:")) {
+            // ... (بخش آپدیت لیست یوزرها دست نزن)
             String[] users = packet.substring(9).split(",");
             Platform.runLater(() -> {
                 if (activeController.userListView != null) {
@@ -141,43 +146,48 @@ public class ChatController {
                     for (String u : users) if (!u.isEmpty()) activeController.userListView.getItems().add(u);
                 }
             });
-        } else if (packet.contains("|")) {
+        }
+        else if (packet.contains("|")) {
             String[] parts = packet.split("\\|");
             if (parts.length < 3) return;
+
             String header = parts[0];
             String avatar = parts[1];
             String text = parts[2];
 
+            // ۱. پیام از طرف کسی به شما آمده (دریافت کننده هستید)
             if (header.startsWith("[Private from ")) {
-                String sender = header.substring(14, header.length() - 1);
-                openPrivateTab(sender, false); // Open tab silently
+                String senderName = header.substring(14, header.length() - 1);
+                openPrivateTab(senderName, false);
                 Platform.runLater(() -> {
-                    VBox box = privateChatLog.get(sender);
+                    VBox box = privateChatLog.get(senderName);
                     if (box != null) {
-                        addMessageBubble(box, sender, avatar, text, false);
-
-                        // NOTIFICATION LOGIC: Show red dot if this tab is NOT the active one
-                        Tab targetTab = tabMap.get(sender);
-                        if (targetTab != null && !activeController.chatTabPane.getSelectionModel().getSelectedItem().equals(targetTab)) {
-                            targetTab.setGraphic(createNotificationDot());
-                        }
+                        addMessageBubble(box, senderName, avatar, text, false);
+                        notifyTab(senderName); // اگر متد نوتیفیکیشن داری
                     }
                 });
-            } else if (header.startsWith("[Private to ")) {
-                // ... (Outgoing private messages don't need red dots)
-            } else {
-                // PUBLIC MESSAGE LOGIC
+            }
+            // ۲. تاییدیه پیام شما برای طرف مقابل (فرستنده هستید - این بخش را اصلاح کن)
+            else if (header.startsWith("[Private to ")) {
+                // نام هدف را از بین براکت استخراج میکند
+                String targetName = header.substring(12, header.length() - 1);
+
+                // مطمئن میشویم تب باز است
+                openPrivateTab(targetName, false);
+
+                Platform.runLater(() -> {
+                    VBox box = privateChatLog.get(targetName);
+                    if (box != null) {
+                        // نمایش پیام خودتان در سمت راست (isSelf = true)
+                        addMessageBubble(box, userName, currentAvatarPath, text, true);
+                    }
+                });
+            }
+            // ۳. پیام عمومی
+            else {
                 boolean isSelf = header.equals(userName);
                 if (activeController.chatBox != null) {
                     addMessageBubble(activeController.chatBox, header, avatar, text, isSelf);
-
-                    // NOTIFICATION LOGIC FOR GENERAL TAB:
-                    Platform.runLater(() -> {
-                        Tab generalTab = activeController.chatTabPane.getTabs().get(0);
-                        if (!activeController.chatTabPane.getSelectionModel().getSelectedItem().equals(generalTab)) {
-                            generalTab.setGraphic(createNotificationDot());
-                        }
-                    });
                 }
             }
         }
