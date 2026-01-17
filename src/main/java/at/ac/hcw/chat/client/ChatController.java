@@ -299,16 +299,76 @@ public class ChatController {
             }
         } catch (IOException e) {} finally { if (isRunning) Platform.runLater(this::showErrorPopup); }
     }
+    /**
+     * Triggered by the Connect button.
+     * Performs a strict multi-step validation of Name, IP, and Port.
+     */
+    @FXML
+    protected void onConnectButtonClick() {
+        String nameInput = nameField.getText().trim();
+        String ipInput = ipField.getText().trim();
+        String portInput = portField.getText().trim();
 
-    @FXML protected void onConnectButtonClick() {
-        if (nameField.getText().trim().isEmpty()) {
-            statusLabel.setText("Please enter your name!");
+        // 1. Basic validation: Check if any field is empty
+        if (nameInput.isEmpty()) {
+            showLoginError("Please enter your name!");
             return;
         }
-        userName = nameField.getText().trim();
-        tempIP = ipField.getText().trim(); tempPort = Integer.parseInt(portField.getText().trim());
-        switchScene("/at/ac/hcw/chat/client/avatar-view.fxml");
+        if (ipInput.isEmpty() || portInput.isEmpty()) {
+            showLoginError("Connection failed: check IP address and port number");
+            return;
+        }
+
+        /*
+         * 2. STRICT NETWORK VALIDATION:
+         * We attempt a real connection test. If this fails, the user cannot see the avatars.
+         */
+        try {
+            int port = Integer.parseInt(portInput);
+
+            // Create an un-connected socket
+            Socket testSocket = new Socket();
+
+            /*
+             * Attempt to connect with a short timeout (1.5 seconds).
+             * InetSocketAddress handles both IP format and Hostname reachability.
+             */
+            testSocket.connect(new java.net.InetSocketAddress(ipInput, port), 1500);
+
+            // If the code reaches here, the server is DEFINITELY online and the IP is correct.
+            testSocket.close(); // Close the test probe immediately
+
+            // Save verified data to static variables
+            userName = nameInput;
+            tempIP = ipInput;
+            tempPort = port;
+
+            // Everything is valid, proceed to Avatar selection
+            switchScene("/at/ac/hcw/chat/client/avatar-view.fxml");
+
+        } catch (NumberFormatException e) {
+            showLoginError("Connection failed: check IP address and port number");
+        } catch (java.net.UnknownHostException e) {
+            // This catches cases where the IP address format is invalid
+            showLoginError("Connection failed: invalid IP address format");
+        } catch (java.io.IOException e) {
+            // This catches "Connection Refused" (wrong port) or "Timed Out" (wrong IP)
+            showLoginError("Connection failed: check IP address and port number");
+        }
     }
+
+    /**
+     * Helper to display error messages on the login screen.
+     */
+    private void showLoginError(String message) {
+        Platform.runLater(() -> {
+            if (statusLabel != null) {
+                statusLabel.setText(message);
+                statusLabel.setStyle("-fx-text-fill: #E57373;"); // Muted soft red
+            }
+        });
+    }
+
 
     @FXML private void onAvatarSelected(javafx.scene.input.MouseEvent e) {
         ImageView iv = (ImageView) e.getSource();
