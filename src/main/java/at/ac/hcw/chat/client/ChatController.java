@@ -229,28 +229,32 @@ public class ChatController {
                     if (box != null) addMessageBubble(box, userName, currentAvatarPath, text, true);
                 });
             }
-            // Scenario 4: General Public Chat
+
+            // Scenario 4: Public Chat
             else {
                 boolean isSelf = header.equals(userName);
                 if (activeController.chatBox != null) {
                     addMessageBubble(activeController.chatBox, header, avatar, text, isSelf);
+
+                    // Show red dot on General tab if someone else messaged while you were in a PV
                     if (!isSelf) notifyGeneral();
                 }
             }
         }
     }
 
-
     /**
      * Shows a red dot on the General tab if the user is currently in a private chat.
      */
     private void notifyGeneral() {
         Platform.runLater(() -> {
-            if (chatTabPane != null && !chatTabPane.getTabs().isEmpty()) {
-                Tab generalTab = chatTabPane.getTabs().get(0); // The first tab is always General
+            // Use activeController to ensure we are talking to the visible window
+            if (activeController != null && activeController.chatTabPane != null && !activeController.chatTabPane.getTabs().isEmpty()) {
+                Tab generalTab = activeController.chatTabPane.getTabs().get(0);
 
-                // Only show the dot if General tab is NOT the one the user is currently looking at
-                if (!chatTabPane.getSelectionModel().getSelectedItem().equals(generalTab)) {
+                // Only show the dot if General tab is NOT the one currently selected
+                Tab selectedTab = activeController.chatTabPane.getSelectionModel().getSelectedItem();
+                if (selectedTab != null && !selectedTab.equals(generalTab)) {
                     generalTab.setGraphic(createNotificationDot());
                 }
             }
@@ -259,20 +263,21 @@ public class ChatController {
 
     /**
      * Shows a red dot on a specific private tab.
-     * @param name The username of the tab to notify.
      */
     private void notifyTab(String name) {
         Platform.runLater(() -> {
+            if (activeController == null) return;
+
             Tab targetTab = tabMap.get(name);
             if (targetTab != null) {
                 // Only show the dot if this private tab is NOT the active one
-                if (!chatTabPane.getSelectionModel().getSelectedItem().equals(targetTab)) {
+                Tab selectedTab = activeController.chatTabPane.getSelectionModel().getSelectedItem();
+                if (selectedTab != null && !selectedTab.equals(targetTab)) {
                     targetTab.setGraphic(createNotificationDot());
                 }
             }
         });
     }
-
     @FXML protected void onSendButtonClick() {
         String msg = messageField.getText().trim();
         if (msg.isEmpty() || out == null) return;
