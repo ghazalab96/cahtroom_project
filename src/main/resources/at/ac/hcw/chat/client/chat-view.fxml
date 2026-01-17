@@ -26,10 +26,10 @@
     <HBox alignment="CENTER_LEFT" spacing="12">
         <children>
             <StackPane>
-                <!-- این دایره پشت عکس قرار می‌گیرد -->
+                <!-- this circle is back of the avatar -->
                 <Circle radius="20" fill="WHITE" stroke="#CFD8DC" />
 
-                <!-- این عکس پنگوئن شماست -->
+                <!-- the penguin photo -->
                 <ImageView fx:id="userAvatarImage" fitHeight="35" fitWidth="35" pickOnBounds="true" preserveRatio="true" />
             </StackPane>
             <Label fx:id="welcomeLabel" style="-fx-font-size: 15; -fx-font-weight: bold; -fx-text-fill: #546E7A;" text="Connecting..." />
