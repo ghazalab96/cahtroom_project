@@ -289,8 +289,6 @@ public class ChatController {
 
     // --- Standard Methods (Time, Network, Scenes) ---
 
-    private String getTimestamp() { return "[" + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")) + "] "; }
-
     private void listenToServer() {
         try {
             String line;
