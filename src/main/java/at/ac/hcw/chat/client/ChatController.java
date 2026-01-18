@@ -220,6 +220,7 @@ public class ChatController {
                     }
                 });
             }
+
             // Scenario 3: Confirmation of your own private message
             else if (header.startsWith("[Private to ")) {
                 String target = header.substring(12, header.length() - 1);
@@ -345,13 +346,13 @@ public class ChatController {
             switchScene("/at/ac/hcw/chat/client/avatar-view.fxml");
 
         } catch (NumberFormatException e) {
-            showLoginError("Connection failed: check IP address and port number");
+            showLoginError("Check IP address and port number");
         } catch (java.net.UnknownHostException e) {
             // This catches cases where the IP address format is invalid
-            showLoginError("Connection failed: invalid IP address format");
+            showLoginError("Invalid IP address format");
         } catch (java.io.IOException e) {
             // This catches "Connection Refused" (wrong port) or "Timed Out" (wrong IP)
-            showLoginError("Connection failed: check IP address and port number");
+            showLoginError("Check IP address and port number");
         }
     }
 
