@@ -68,9 +68,11 @@ public class ChatController {
         // Double-click listener on user list to open private tabs
         if (userListView != null) {
             userListView.setOnMouseClicked(event -> {
+                // If the user double-clicks a name that isn't their own
                 if (event.getClickCount() == 2) {
                     String selected = userListView.getSelectionModel().getSelectedItem();
                     if (selected != null && !selected.equals(userName)) {
+                        // Open or switch to a private tab
                         openPrivateTab(selected, true); // true = focus/switch to this tab
                     }
                 }
@@ -120,6 +122,7 @@ public class ChatController {
             scrollPane.setFitToWidth(true);
             scrollPane.setStyle("-fx-background-color: white;");
 
+            // Create the Tab object
             Tab newTab = new Tab(targetUser, scrollPane);
             newTab.setClosable(true);
 
@@ -133,6 +136,7 @@ public class ChatController {
             privateChatLog.put(targetUser, privateBox);
             tabMap.put(targetUser, newTab);
 
+            // Switch to the new tab if requested
             if (shouldFocus) activeController.chatTabPane.getSelectionModel().select(newTab);
         });
     }
@@ -146,27 +150,36 @@ public class ChatController {
             try {
                 // Safely load the avatar image
                 InputStream is = getClass().getResourceAsStream(avatarPath);
+                // Fallback to default avatar if path is invalid
                 if (is == null) is = getClass().getResourceAsStream("/at/ac/hcw/chat/client/images/profile0.jpeg");
 
+                // Configure the avatar display
                 ImageView avatarView = new ImageView(new Image(is));
                 avatarView.setFitHeight(40); avatarView.setFitWidth(40);
                 avatarView.setClip(new Circle(20, 20, 20));
 
+                // Create name and timestamp label
                 Label nameLbl = new Label(name + "  " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
                 nameLbl.setStyle("-fx-font-size: 9px; -fx-text-fill: #90A4AE; -fx-font-weight: bold;");
 
+                // Create message content label
                 Label msgContent = new Label(message);
                 msgContent.setWrapText(true); msgContent.setMaxWidth(300);
 
+
+                // Build the message bubble (VBox)
                 VBox bubble = new VBox(3, nameLbl, msgContent);
                 if (isSelf) {
+                    // Right-aligned blue bubble for current user
                     bubble.setStyle("-fx-background-color: #E3F2FD; -fx-background-radius: 15 0 15 15; -fx-padding: 8 12;");
                     bubble.setAlignment(Pos.TOP_RIGHT);
                 } else {
+                    // Left-aligned grey bubble for other users
                     bubble.setStyle("-fx-background-color: #F1F1F1; -fx-background-radius: 0 15 15 15; -fx-padding: 8 12;");
                     bubble.setAlignment(Pos.TOP_LEFT);
                 }
 
+                // Row container (HBox) to hold bubble and avatar side-by-side
                 HBox row = new HBox(10);
                 if (isSelf) {
                     row.setAlignment(Pos.TOP_RIGHT); row.getChildren().addAll(bubble, avatarView);
@@ -179,23 +192,21 @@ public class ChatController {
     }
 
     /**
-     * Routes incoming network packets.
-     * Logic: If tab is not active, apply the Red Bullet notification.
-     */
-    /**
      * Routes incoming packets to the correct UI components.
      * Preserves Red Bullet notifications and Private Chat routing.
      */
     private void handleMessageRouting(String packet) {
         if (activeController == null) return;
 
+        // Update the sidebar user list
         if (packet.startsWith("USERLIST:")) {
             String[] users = packet.substring(9).split(",");
             activeController.userListView.getItems().clear();
             for (String u : users) if (!u.isEmpty()) activeController.userListView.getItems().add(u);
         }
+        // Handle chat messages separated by the Pipe "|" character
         else if (packet.contains("|")) {
-            String[] parts = packet.split("\\|");
+            String[] parts = packet.split("\\|"); // Split into Header, Avatar, and Message
             if (parts.length < 3) return;
             String header = parts[0]; String avatar = parts[1]; String text = parts[2];
 
@@ -255,6 +266,7 @@ public class ChatController {
 
                 // Only show the dot if General tab is NOT the one currently selected
                 Tab selectedTab = activeController.chatTabPane.getSelectionModel().getSelectedItem();
+                // Check if the current visible tab is NOT the general tab
                 if (selectedTab != null && !selectedTab.equals(generalTab)) {
                     generalTab.setGraphic(createNotificationDot());
                 }
@@ -273,6 +285,7 @@ public class ChatController {
             if (targetTab != null) {
                 // Only show the dot if this private tab is NOT the active one
                 Tab selectedTab = activeController.chatTabPane.getSelectionModel().getSelectedItem();
+                // Check if the current visible tab is NOT the one that received the message
                 if (selectedTab != null && !selectedTab.equals(targetTab)) {
                     targetTab.setGraphic(createNotificationDot());
                 }
@@ -283,6 +296,7 @@ public class ChatController {
         String msg = messageField.getText().trim();
         if (msg.isEmpty() || out == null) return;
         Tab sel = chatTabPane.getSelectionModel().getSelectedItem();
+        // Route message based on current active tab (General vs @User)
         if (sel.getText().equals("General")) out.println(msg);
         else out.println("@" + sel.getText() + ": " + msg);
         messageField.clear();
@@ -293,11 +307,15 @@ public class ChatController {
     private void listenToServer() {
         try {
             String line;
+            // Blocking call: readLine() waits until the server sends a message
             while (isRunning && (line = in.readLine()) != null) {
-                final String m = line; Platform.runLater(() -> handleMessageRouting(m));
+                final String m = line; Platform.runLater(() -> handleMessageRouting(m)); // Pass data to UI router
             }
-        } catch (IOException e) {} finally { if (isRunning) Platform.runLater(this::showErrorPopup); }
+        } catch (IOException e) {} finally {
+            if (isRunning) Platform.runLater(this::showErrorPopup); // Trigger error UI if loop breaks
+        }
     }
+
     /**
      * Triggered by the Connect button.
      * Performs a strict multi-step validation of Name, IP, and Port.
@@ -370,8 +388,9 @@ public class ChatController {
 
 
     @FXML private void onAvatarSelected(javafx.scene.input.MouseEvent e) {
-        ImageView iv = (ImageView) e.getSource();
+        ImageView iv = (ImageView) e.getSource(); // Get the clicked image
         String url = iv.getImage().getUrl();
+        // Extract local path from URL
         currentAvatarPath = url.substring(url.indexOf("/at/ac/hcw/"));
         if (selectedAvatarPreview != null) selectedAvatarPreview.setImage(iv.getImage());
     }
@@ -385,6 +404,7 @@ public class ChatController {
                     socket = new Socket(tempIP, tempPort);
                     out = new PrintWriter(socket.getOutputStream(), true);
                     in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    // Send initial handshake packet: "Name|AvatarPath"
                     out.println(userName + "|" + currentAvatarPath);
                     isRunning = true;
                     new Thread(this::listenToServer).start();
@@ -441,17 +461,23 @@ public class ChatController {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    /**
+     * Utility to swap the FXML content within the current window Stage.
+     */
     private void switchSceneOnStage(Stage s, String p) throws IOException {
         FXMLLoader l = new FXMLLoader(getClass().getResource(p));
         s.setScene(new Scene(l.load()));
         ChatController next = l.getController();
-        activeController = next;
+        activeController = next; // Register the new scene's controller
         if (p.contains("chat-view")) {
             next.welcomeLabel.setText("User: " + userName);
             next.userAvatarImage.setImage(new Image(getClass().getResourceAsStream(currentAvatarPath)));
         }
     }
 
+    /**
+     * Helper to find the current active window and switch its scene.
+     */
     private void switchScene(String p) {
         Platform.runLater(() -> {
             try {
