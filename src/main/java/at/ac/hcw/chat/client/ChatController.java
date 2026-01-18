@@ -5,7 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Node; //
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -22,61 +22,98 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+/**
+ * Final Advanced Controller for HCW Chat Room.
+ * Preserves: Multi-stage Login, Private Tabs, Chat Bubbles, Avatars, Timestamps,
+ * and fixed Red Bullet Notifications.
+ */
 public class ChatController {
-    // FXML Connections
+    // UI Connections from FXML
     @FXML private TextField ipField, portField, nameField, messageField;
     @FXML private Label statusLabel, welcomeLabel;
     @FXML private ListView<String> userListView;
     @FXML private TabPane chatTabPane;
-    @FXML private VBox chatBox;
+    @FXML private VBox chatBox; // Container for General chat bubbles
     @FXML private ImageView selectedAvatarPreview, userAvatarImage;
 
-    // Networking Static Variables
+    // Networking Resources
     private static Socket socket;
     private static PrintWriter out;
     private static BufferedReader in;
     private static String userName;
     private static volatile boolean isRunning = false;
+
+    /**
+     * static activeController: Keeps a reference to the UI currently on screen.
+     * This is vital for updating the UI from the background networking thread.
+     */
     private static ChatController activeController;
 
-    // Maps to track Private Chats
+    // Map to store private chat message containers (VBoxes) for each user
     private static final Map<String, VBox> privateChatLog = new HashMap<>();
+
+    // Map to store specific Tab objects to manage Red Bullet notifications
     private static final Map<String, Tab> tabMap = new HashMap<>();
 
-    // State Transfer
+    // State transfer variables across scenes
     private static String currentAvatarPath = "/at/ac/hcw/chat/client/images/profile0.jpeg";
     private static String tempIP;
     private static int tempPort;
 
     @FXML
     public void initialize() {
+        // Register this instance as the active controller immediately
         activeController = this;
 
+        // Double-click listener on user list to open private tabs
         if (userListView != null) {
             userListView.setOnMouseClicked(event -> {
                 if (event.getClickCount() == 2) {
                     String selected = userListView.getSelectionModel().getSelectedItem();
-                    if (selected != null && !selected.equals(userName)) openPrivateTab(selected, true);
+                    if (selected != null && !selected.equals(userName)) {
+                        openPrivateTab(selected, true); // true = focus/switch to this tab
+                    }
                 }
             });
         }
+
+        /*
+         * RED BULLET CLEAR LOGIC:
+         * This listener detects when the user clicks on a different tab.
+         * If the newly selected tab has a red dot (Graphic), it removes it.
+         */
         if (chatTabPane != null) {
             chatTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-                if (newTab != null) {
-                    newTab.setGraphic(null); // Remove the red dot icon
+                if (newTab != null && newTab.getGraphic() != null) {
+                    newTab.setGraphic(null); // Clear the notification dot
                 }
             });
         }
     }
 
+    /**
+     * Helper to create the actual Red Bullet UI element.
+     */
+    private Circle createNotificationDot() {
+        Circle dot = new Circle(5);
+        dot.setStyle("-fx-fill: #FF5252; -fx-stroke: white; -fx-stroke-width: 1;");
+        return dot;
+    }
+
+    /**
+     * Manages Private Tab creation and switching.
+     */
     private void openPrivateTab(String targetUser, boolean shouldFocus) {
         Platform.runLater(() -> {
             if (activeController == null || activeController.chatTabPane == null) return;
+
+            // If the tab is already open, just switch to it if requested
             if (tabMap.containsKey(targetUser)) {
                 if (shouldFocus) activeController.chatTabPane.getSelectionModel().select(tabMap.get(targetUser));
                 return;
             }
 
+            // Create new graphical containers for the private chat
             VBox privateBox = new VBox(15);
             privateBox.setStyle("-fx-background-color: white; -fx-padding: 15;");
             ScrollPane scrollPane = new ScrollPane(privateBox);
@@ -85,19 +122,29 @@ public class ChatController {
 
             Tab newTab = new Tab(targetUser, scrollPane);
             newTab.setClosable(true);
-            newTab.setOnClosed(e -> { privateChatLog.remove(targetUser); tabMap.remove(targetUser); });
+
+            // Cleanup maps when user closes the tab
+            newTab.setOnClosed(e -> {
+                privateChatLog.remove(targetUser);
+                tabMap.remove(targetUser);
+            });
 
             activeController.chatTabPane.getTabs().add(newTab);
             privateChatLog.put(targetUser, privateBox);
             tabMap.put(targetUser, newTab);
+
             if (shouldFocus) activeController.chatTabPane.getSelectionModel().select(newTab);
         });
     }
 
+    /**
+     * Programmatically builds a Telegram-style message bubble.
+     */
     private void addMessageBubble(VBox container, String name, String avatarPath, String message, boolean isSelf) {
         if (container == null) return;
         Platform.runLater(() -> {
             try {
+                // Safely load the avatar image
                 InputStream is = getClass().getResourceAsStream(avatarPath);
                 if (is == null) is = getClass().getResourceAsStream("/at/ac/hcw/chat/client/images/profile0.jpeg");
 
@@ -131,76 +178,107 @@ public class ChatController {
         });
     }
 
+    /**
+     * Routes incoming network packets.
+     * Logic: If tab is not active, apply the Red Bullet notification.
+     */
+    /**
+     * Routes incoming packets to the correct UI components.
+     * Preserves Red Bullet notifications and Private Chat routing.
+     */
     private void handleMessageRouting(String packet) {
         if (activeController == null) return;
+
         if (packet.startsWith("USERLIST:")) {
             String[] users = packet.substring(9).split(",");
-            Platform.runLater(() -> {
-                if (activeController.userListView != null) {
-                    activeController.userListView.getItems().clear();
-                    for (String u : users) if (!u.isEmpty()) activeController.userListView.getItems().add(u);
-                }
-            });
-        } else if (packet.contains("|")) {
+            activeController.userListView.getItems().clear();
+            for (String u : users) if (!u.isEmpty()) activeController.userListView.getItems().add(u);
+        }
+        else if (packet.contains("|")) {
             String[] parts = packet.split("\\|");
             if (parts.length < 3) return;
-            String header = parts[0];
-            String avatar = parts[1];
-            String text = parts[2];
+            String header = parts[0]; String avatar = parts[1]; String text = parts[2];
 
-            if (header.startsWith("[Private from ")) {
+            // Scenario 1: Private Message Error (User offline) -> ROUTE TO PRIVATE TAB
+            if (header.startsWith("[Private Error ")) {
+                String target = header.substring(15, header.length() - 1);
+                openPrivateTab(target, false); // Ensure tab is open
+                Platform.runLater(() -> {
+                    VBox box = privateChatLog.get(target);
+                    if (box != null) addMessageBubble(box, "System", avatar, text, false);
+                });
+            }
+            // Scenario 2: Incoming Private Message from someone else
+            else if (header.startsWith("[Private from ")) {
                 String sender = header.substring(14, header.length() - 1);
-                openPrivateTab(sender, false); // Open tab silently
+                openPrivateTab(sender, false);
                 Platform.runLater(() -> {
                     VBox box = privateChatLog.get(sender);
                     if (box != null) {
                         addMessageBubble(box, sender, avatar, text, false);
-
-                        // NOTIFICATION LOGIC: Show red dot if this tab is NOT the active one
-                        Tab targetTab = tabMap.get(sender);
-                        if (targetTab != null && !activeController.chatTabPane.getSelectionModel().getSelectedItem().equals(targetTab)) {
-                            targetTab.setGraphic(createNotificationDot());
-                        }
+                        notifyTab(sender);
                     }
                 });
-            } else if (header.startsWith("[Private to ")) {
-                // ... (Outgoing private messages don't need red dots)
-            } else {
-                // PUBLIC MESSAGE LOGIC
+            }
+
+            // Scenario 3: Confirmation of your own private message
+            else if (header.startsWith("[Private to ")) {
+                String target = header.substring(12, header.length() - 1);
+                openPrivateTab(target, false);
+                Platform.runLater(() -> {
+                    VBox box = privateChatLog.get(target);
+                    if (box != null) addMessageBubble(box, userName, currentAvatarPath, text, true);
+                });
+            }
+
+            // Scenario 4: Public Chat
+            else {
                 boolean isSelf = header.equals(userName);
                 if (activeController.chatBox != null) {
                     addMessageBubble(activeController.chatBox, header, avatar, text, isSelf);
 
-                    // NOTIFICATION LOGIC FOR GENERAL TAB:
-                    Platform.runLater(() -> {
-                        Tab generalTab = activeController.chatTabPane.getTabs().get(0);
-                        if (!activeController.chatTabPane.getSelectionModel().getSelectedItem().equals(generalTab)) {
-                            generalTab.setGraphic(createNotificationDot());
-                        }
-                    });
+                    // Show red dot on General tab if someone else messaged while you were in a PV
+                    if (!isSelf) notifyGeneral();
                 }
             }
         }
     }
 
-    private void notifyTab(String name) {
-        Tab t = tabMap.get(name);
-        if (t != null && !chatTabPane.getSelectionModel().getSelectedItem().equals(t)) {
-            Circle dot = new Circle(5); dot.setStyle("-fx-fill: #FF5252; -fx-stroke: white;");
-            t.setGraphic(dot);
-        }
+    /**
+     * Shows a red dot on the General tab if the user is currently in a private chat.
+     */
+    private void notifyGeneral() {
+        Platform.runLater(() -> {
+            // Use activeController to ensure we are talking to the visible window
+            if (activeController != null && activeController.chatTabPane != null && !activeController.chatTabPane.getTabs().isEmpty()) {
+                Tab generalTab = activeController.chatTabPane.getTabs().get(0);
+
+                // Only show the dot if General tab is NOT the one currently selected
+                Tab selectedTab = activeController.chatTabPane.getSelectionModel().getSelectedItem();
+                if (selectedTab != null && !selectedTab.equals(generalTab)) {
+                    generalTab.setGraphic(createNotificationDot());
+                }
+            }
+        });
     }
 
     /**
-     * Creates a small red circle to notify the user of unread messages.
+     * Shows a red dot on a specific private tab.
      */
-    private javafx.scene.shape.Circle createNotificationDot() {
-        javafx.scene.shape.Circle dot = new javafx.scene.shape.Circle(5);
-        dot.setStyle("-fx-fill: #FF5252; -fx-stroke: white; -fx-stroke-width: 1;");
-        return dot;
+    private void notifyTab(String name) {
+        Platform.runLater(() -> {
+            if (activeController == null) return;
+
+            Tab targetTab = tabMap.get(name);
+            if (targetTab != null) {
+                // Only show the dot if this private tab is NOT the active one
+                Tab selectedTab = activeController.chatTabPane.getSelectionModel().getSelectedItem();
+                if (selectedTab != null && !selectedTab.equals(targetTab)) {
+                    targetTab.setGraphic(createNotificationDot());
+                }
+            }
+        });
     }
-
-
     @FXML protected void onSendButtonClick() {
         String msg = messageField.getText().trim();
         if (msg.isEmpty() || out == null) return;
@@ -210,15 +288,86 @@ public class ChatController {
         messageField.clear();
     }
 
-    @FXML protected void onConnectButtonClick() {
-        if (nameField.getText().trim().isEmpty()) {
-            statusLabel.setText("Please enter your name!");
+    // --- Standard Methods (Time, Network, Scenes) ---
+
+    private void listenToServer() {
+        try {
+            String line;
+            while (isRunning && (line = in.readLine()) != null) {
+                final String m = line; Platform.runLater(() -> handleMessageRouting(m));
+            }
+        } catch (IOException e) {} finally { if (isRunning) Platform.runLater(this::showErrorPopup); }
+    }
+    /**
+     * Triggered by the Connect button.
+     * Performs a strict multi-step validation of Name, IP, and Port.
+     */
+    @FXML
+    protected void onConnectButtonClick() {
+        String nameInput = nameField.getText().trim();
+        String ipInput = ipField.getText().trim();
+        String portInput = portField.getText().trim();
+
+        // 1. Basic validation: Check if any field is empty
+        if (nameInput.isEmpty()) {
+            showLoginError("Please enter your name!");
             return;
         }
-        userName = nameField.getText().trim();
-        tempIP = ipField.getText().trim(); tempPort = Integer.parseInt(portField.getText().trim());
-        switchScene("/at/ac/hcw/chat/client/avatar-view.fxml");
+        if (ipInput.isEmpty() || portInput.isEmpty()) {
+            showLoginError("Connection failed: check IP address and port number");
+            return;
+        }
+
+        /*
+         * 2. STRICT NETWORK VALIDATION:
+         * We attempt a real connection test. If this fails, the user cannot see the avatars.
+         */
+        try {
+            int port = Integer.parseInt(portInput);
+
+            // Create an un-connected socket
+            Socket testSocket = new Socket();
+
+            /*
+             * Attempt to connect with a short timeout (1.5 seconds).
+             * InetSocketAddress handles both IP format and Hostname reachability.
+             */
+            testSocket.connect(new java.net.InetSocketAddress(ipInput, port), 1500);
+
+            // If the code reaches here, the server is DEFINITELY online and the IP is correct.
+            testSocket.close(); // Close the test probe immediately
+
+            // Save verified data to static variables
+            userName = nameInput;
+            tempIP = ipInput;
+            tempPort = port;
+
+            // Everything is valid, proceed to Avatar selection
+            switchScene("/at/ac/hcw/chat/client/avatar-view.fxml");
+
+        } catch (NumberFormatException e) {
+            showLoginError("Check IP address and port number");
+        } catch (java.net.UnknownHostException e) {
+            // This catches cases where the IP address format is invalid
+            showLoginError("Invalid IP address format");
+        } catch (java.io.IOException e) {
+            // This catches "Connection Refused" (wrong port) or "Timed Out" (wrong IP)
+            showLoginError("Check IP address and port number");
+        }
     }
+
+    /**
+     * Helper to display error messages on the login screen.
+     */
+    private void showLoginError(String message) {
+        Platform.runLater(() -> {
+            if (statusLabel != null) {
+                statusLabel.setText(message);
+                statusLabel.setStyle("-fx-text-fill: #E57373;"); // Muted soft red
+            }
+        });
+    }
+
 
     @FXML private void onAvatarSelected(javafx.scene.input.MouseEvent e) {
         ImageView iv = (ImageView) e.getSource();
@@ -232,7 +381,7 @@ public class ChatController {
             switchScene("/at/ac/hcw/chat/client/chat-view.fxml");
             new Thread(() -> {
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(500); // Wait for UI to settle
                     socket = new Socket(tempIP, tempPort);
                     out = new PrintWriter(socket.getOutputStream(), true);
                     in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -244,41 +393,50 @@ public class ChatController {
         } catch (Exception ex) { ex.printStackTrace(); }
     }
 
-    private void listenToServer() {
-        try {
-            String line;
-            while (isRunning && (line = in.readLine()) != null) {
-                final String m = line; Platform.runLater(() -> handleMessageRouting(m));
-            }
-        } catch (IOException e) {} finally { if (isRunning) Platform.runLater(this::showErrorPopup); }
-    }
+    /**
+     * Closes the chat window and displays the Error View.
+     * Improved: Uses a global search to find and close the active Stage.
+     */
 
     private void showErrorPopup() {
         Platform.runLater(() -> {
             try {
-                isRunning = false; if (socket != null) socket.close();
-                if (activeController != null && activeController.chatTabPane != null) {
-                    ((Stage) activeController.chatTabPane.getScene().getWindow()).close();
+                isRunning = false;
+                if (socket != null) socket.close();
+
+                // 1. Find the current stage (window) and close it
+                Stage currentStage = null;
+                if (chatTabPane != null && chatTabPane.getScene() != null) {
+                    currentStage = (Stage) chatTabPane.getScene().getWindow();
+                } else {
+                    // Fallback: Find any open window to close
+                    List<Window> openWindows = Window.getWindows();
+                    if (!openWindows.isEmpty()) currentStage = (Stage) openWindows.get(0);
                 }
-                FXMLLoader l = new FXMLLoader(getClass().getResource("/at/ac/hcw/chat/client/error-view.fxml"));
-                Stage s = new Stage(); s.setScene(new Scene(l.load())); s.setTitle("Error"); s.show();
-            } catch (Exception e) {}
+
+                if (currentStage != null) currentStage.close();
+
+                // 2. Open the Error View as a fresh, independent window
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/at/ac/hcw/chat/client/error-view.fxml"));
+                Parent root = loader.load();
+                Stage errorStage = new Stage();
+                errorStage.setScene(new Scene(root));
+                errorStage.setTitle("Connection Error");
+                errorStage.setResizable(false);
+                errorStage.show();
+
+            } catch (IOException e) {
+                System.err.println("Failed to display error popup: " + e.getMessage());
+            }
         });
     }
 
-    /**
-     * UPDATED: Handles disconnect and returns to Login reliably.
-     */
-    @FXML
-    protected void onDisconnectButtonClick(ActionEvent event) {
+    @FXML protected void onDisconnectButtonClick(ActionEvent event) {
         isRunning = false;
         try {
             if (socket != null) socket.close();
             privateChatLog.clear(); tabMap.clear();
-
-            // Find the stage from the event source (the button clicked)
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
             switchSceneOnStage(stage, "/at/ac/hcw/chat/client/login-view.fxml");
         } catch (Exception e) { e.printStackTrace(); }
     }

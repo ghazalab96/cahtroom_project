@@ -168,27 +168,32 @@ public class Server {
         /**
          * Logic for routing private messages to a specific user.
          */
+        /**
+         * Logic for routing private messages.
+         * Fixed: Sends a formatted error packet if the target is offline.
+         */
         private void handlePrivateMessage(String rawMessage) {
             try {
-                int colonIndex = rawMessage.indexOf(":");
-                String targetName = rawMessage.substring(1, colonIndex).trim(); // Extract target name
-                String content = rawMessage.substring(colonIndex + 1).trim(); // Extract text
+                int firstColon = rawMessage.indexOf(":");
+                String targetName = rawMessage.substring(1, firstColon).trim();
+                String messageContent = rawMessage.substring(firstColon + 1).trim();
 
                 PrintWriter targetWriter = clientMap.get(targetName);
                 if (targetWriter != null) {
-                    // Send to Receiver: "[Private from Name]|Avatar|Message"
-                    targetWriter.println("[Private from " + clientName + "]|" + this.avatarUrl + "|" + content);
-                    // Send confirmation to Sender: "[Private to Name]|Avatar|Message"
-                    out.println("[Private to " + targetName + "]|" + this.avatarUrl + "|" + content);
+                    // Success: Send to target and sender
+                    targetWriter.println("[Private from " + clientName + "]|" + this.avatarUrl + "|" + messageContent);
+                    out.println("[Private to " + targetName + "]|" + this.avatarUrl + "|" + messageContent);
                 } else {
-                    // Target not found: "[Private Error Name]|SystemAvatar|ErrorText"
-                    out.println("[Private Error " + targetName + "]|/at/ac/hcw/chat/client/images/profile0.jpeg|User offline.");
+                    /*
+                     * FIX: Send a formatted packet back to the sender.
+                     * This tells the client to put the error inside the specific private tab.
+                     */
+                    out.println("[Private Error " + targetName + "]|/at/ac/hcw/chat/client/images/profile0.jpeg|User is currently offline.");
                 }
             } catch (Exception e) {
-                out.println("[System]|/at/ac/hcw/chat/client/images/profile0.jpeg|Bad message format.");
+                out.println("[System]|/at/ac/hcw/chat/client/images/profile0.jpeg|Invalid private message format.");
             }
         }
-
         /**
          * Iterates through the map and sends the packet to every active stream.
          */
