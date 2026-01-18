@@ -1,42 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
+<!--gibt Version und 8 Zeichensatz,wichtig damit Texte richtig gelesen werden -->
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
+<!--macht Klassen verfügbar, Ohne control.* → Button, Label,... funktionieren nicht-->
 
 <VBox spacing="20" alignment="CENTER"
+
       style="-fx-background-color: #F4F7F9; -fx-background-radius: 20;"
       xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="at.ac.hcw.chat.client.ChatController">
+    <!--Verbindet dieses FXML mit der Java-Klasse ChatController-->
+    <!-- Nur UserInterface, kein Einfluss auf Logik oder Performance.-->
 
-    <!--padding: Adds a 40-pixel buffer around all sides to prevent elements from touching the window edges -->
+
     <padding>
         <Insets top="40" right="40" bottom="40" left="40"/>
     </padding>
+<!--•	Fügt Innenabstand hinzu - 40px zu jedem Rand ➡ Verhindert, dass UI am Fensterrand klebt-->
 
-    <!-- Main Application Title -->
     <Label text="HCW Chat Room" textFill="#546E7A">
         <font>
             <Font name="System Bold" size="22.0"/>
         </font>
     </Label>
 
+    <!-- (Font) Nutzt System-Schrift, ➡ Titel wird visuell hervorgehoben-->
+
     <VBox spacing="10" maxWidth="250">
 
-        <!-- Server IP Input -->
         <Label text="Server IP" textFill="#78909C" />
         <TextField fx:id="ipField" text="127.0.0.1"
                    style="-fx-background-radius: 15; -fx-padding: 8; -fx-border-color: #CFD8DC; -fx-border-radius: 15; -fx-background-insets: 0;"/>
 
-        <!-- Server Port Input -->
+        <!--Analog zum IP-Label: Zeigt die Beschriftung für den Netzwerk-Port an-->
         <Label text="Port" textFill="#78909C" />
         <TextField fx:id="portField" text="12345"
                    style="-fx-background-radius: 15; -fx-padding: 8; -fx-border-color: #CFD8DC; -fx-border-radius: 15; -fx-background-insets: 0;"/>
 
-        <!-- Username Input -->
+        <!-- Erzeugt die Beschriftung für das Namensfeld, -->
         <Label text="Your Name" textFill="#78909C" />
         <TextField fx:id="nameField" promptText="Enter name"
                    style="-fx-background-radius: 15; -fx-padding: 8; -fx-border-color: #CFD8DC;
@@ -44,7 +49,7 @@
     </VBox>
 
 
-
+<!--verknüpft den Button-Klick mit der Java-Methode onConnectButtonClick()-->
     <Button fx:id="connectButton" text="Connect" onAction="#onConnectButtonClick"
             prefWidth="250" prefHeight="40"
             style="-fx-background-color: #78909C; -fx-text-fill: white; -fx-background-radius: 20;

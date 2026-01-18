@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--XML-Format ,-->
 
-
-<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Insets?>  <!--padding innerhalb eines Containers definieren-->
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.*?>   <!--Lädt die Container-Typen-->
 <?import javafx.scene.text.Font?>
 
 
@@ -11,8 +11,10 @@
       style="-fx-background-color: #FFF5F5; -fx-background-radius: 20; -fx-border-color: #FFCDD2; -fx-border-radius: 20;"
       xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="at.ac.hcw.chat.client.ChatController">
+      <!--Methode in ChatController wird aufgerufen wenn Button geklickt wird-->
 
-    <!-- padding: Generates a 30-pixel safety margin around the content inside the box -->
+
+    <!--Padding: Sicherheitsabstand von 30 Pixeln um den Inhalt innerhalb der Box herum -->
     <padding>
         <Insets top="30" right="30" bottom="30" left="30"/>
     </padding>
@@ -20,17 +22,17 @@
 
     <Label text="⚠️ Connection Lost" textFill="#E57373">
         <font>
-            <!-- System Bold Font at 18px to ensure the title is the most prominent element -->
             <Font name="System Bold" size="18.0"/>
         </font>
     </Label>
 
-    <!-- Secondary Label: Provides a brief explanation of what happened to the connection -->
+    <!--Liefert kurze Erklärung darüber, was mit der Verbindung passiert ist -->
     <Label text="The server has disconnected." textFill="#795548" />
 
-
+    <!--onAction bedeutet: "Suche im Controller nach einer Methode mit diesem Namen."-->
     <Button text="Back to Login" onAction="#onDisconnectButtonClick"
             prefWidth="140"
             style="-fx-background-color: #78909C; -fx-text-fill: white;
             -fx-background-radius: 15; -fx-cursor: hand;" />
+                                <!--Mauszeiger wird zur Hand-->
 </VBox>
