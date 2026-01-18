@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<AnchorPane prefHeight="500.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="at.ac.hcw.chat.client.ChatController">
+    <children>
+        <!-- Full Background -->
+        <ImageView fitHeight="500.0" fitWidth="700.0" pickOnBounds="true">
+            <image><Image url="@images/profile_back.png" /></image>
+        </ImageView>
+
+        <!-- Main Content -->
+        <VBox alignment="CENTER" spacing="20" AnchorPane.bottomAnchor="50" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0" AnchorPane.topAnchor="20">
+            <!-- Large Zoomed Preview -->
+            <StackPane>
+                <Circle fill="WHITE" radius="70" stroke="#78909C" strokeWidth="3" />
+                <ImageView fx:id="selectedAvatarPreview" fitHeight="140" fitWidth="140" pickOnBounds="true">
+                    <image><Image url="@images/profile0.jpeg" /></image>
+                    <clip><Circle centerX="70" centerY="70" radius="70" /></clip>
+                </ImageView>
+            </StackPane>
+
+            <Label style="-fx-font-weight: bold; -fx-font-size: 24;" text="choose your avatar!" textFill="#455a64" />
+
+            <!-- Grid: 2 rows of 3 -->
+            <GridPane alignment="CENTER" hgap="20" vgap="20">
+                <children>
+                    <ImageView fitHeight="80" fitWidth="80" onMouseClicked="#onAvatarSelected" pickOnBounds="true" style="-fx-cursor: hand;" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <image><Image url="@images/profile1.jpeg" /></image>
+                        <clip><Circle centerX="40" centerY="40" radius="40" /></clip>
+                    </ImageView>
+                    <ImageView fitHeight="80" fitWidth="80" onMouseClicked="#onAvatarSelected" pickOnBounds="true" style="-fx-cursor: hand;" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <image><Image url="@images/profile2.jpeg" /></image>
+                        <clip><Circle centerX="40" centerY="40" radius="40" /></clip>
+                    </ImageView>
+                    <ImageView fitHeight="80" fitWidth="80" onMouseClicked="#onAvatarSelected" pickOnBounds="true" style="-fx-cursor: hand;" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                        <image><Image url="@images/profile3.jpeg" /></image>
+                        <clip><Circle centerX="40" centerY="40" radius="40" /></clip>
+                    </ImageView>
+                    <ImageView fitHeight="80" fitWidth="80" onMouseClicked="#onAvatarSelected" pickOnBounds="true" style="-fx-cursor: hand;" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                        <image><Image url="@images/profile4.jpeg" /></image>
+                        <clip><Circle centerX="40" centerY="40" radius="40" /></clip>
+                    </ImageView>
+                    <ImageView fitHeight="80" fitWidth="80" onMouseClicked="#onAvatarSelected" pickOnBounds="true" style="-fx-cursor: hand;" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                        <image><Image url="@images/profile5.jpeg" /></image>
+                        <clip><Circle centerX="40" centerY="40" radius="40" /></clip>
+                    </ImageView>
+                    <ImageView fitHeight="80" fitWidth="80" onMouseClicked="#onAvatarSelected" pickOnBounds="true" style="-fx-cursor: hand;" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                        <image><Image url="@images/profile6.jpeg" /></image>
+                        <clip><Circle centerX="40" centerY="40" radius="40" /></clip>
+                    </ImageView>
+                </children>
+                <columnConstraints>
+                    <ColumnConstraints />
+                    <ColumnConstraints />
+                    <ColumnConstraints />
+                </columnConstraints>
+                <rowConstraints>
+                    <RowConstraints />
+                    <RowConstraints />
+                </rowConstraints>
+            </GridPane>
+        </VBox>
+
+        <!-- Bottom Right Start Button -->
+        <Button layoutX="558.0" layoutY="440.0" onAction="#onFinalJoinClick" prefHeight="38.0" prefWidth="112.0" style="-fx-background-color: #2196F3; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10 30; -fx-font-weight: bold; -fx-cursor: hand;" text="start chat" AnchorPane.bottomAnchor="23.0" AnchorPane.rightAnchor="30.0" />
+    </children>
+</AnchorPane>
