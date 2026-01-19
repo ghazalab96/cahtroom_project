@@ -18,11 +18,11 @@ public class Server {
      * clientMap: Stores active users.
      * Key: Username (String) | Value: Their specific output stream (PrintWriter)
      */
-    private static final Map<String, PrintWriter> clientMap = new ConcurrentHashMap<>();//Hashmap --> sicherer für mehrere threads gleichzeitig
+    private static final Map<String, PrintWriter> clientMap = new ConcurrentHashMap<>();//Hashmap --> safe for more than one thread at hte same time
 
     public static void main(String[] args) {
         // Force the JVM to prioritize IPv4 over IPv6 for local network discovery
-        System.setProperty("java.net.preferIPv4Stack", "true");//erzwungen auf ipv4
+        System.setProperty("java.net.preferIPv4Stack", "true");//forced on ipv4
 
         // Scanner reads from Standard Input (Keyboard) for admin configuration
         Scanner scanner = new Scanner(System.in);
@@ -63,7 +63,7 @@ public class Server {
                 System.out.println("[CONNECT]: Connection established with " + clientSocket.getInetAddress());//get ip address from client
 
                 // Hand off the new connection to a dedicated Thread (ClientHandler)
-                new ClientHandler(clientSocket).start();//wird run() von ClientHandler ausgeführt
+                new ClientHandler(clientSocket).start(); //run() is executed by ClientHandler
             }
         } catch (IOException e) {
             System.err.println("Critical Socket Error: " + e.getMessage());
@@ -114,7 +114,7 @@ public class Server {
             try {
                 // Initialize character-based communication streams
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);//boolean= auto flush (ohne flush wartet client ewig)
+                out = new PrintWriter(socket.getOutputStream(), true);//boolean= auto flush (without flush, client should wait indefinitely )
 
                 /*
                  * STEP 1: LOGIN PROTOCOL
@@ -126,7 +126,7 @@ public class Server {
                     // \\| is needed because the Pipe character is a regex reserved symbol
                     String[] parts = loginLine.split("\\|");
                     this.clientName = parts[0];//erste teil
-                    this.avatarUrl = parts[1]; // Store the avatar path for broadcasting  zweite teil
+                    this.avatarUrl = parts[1]; // Store the avatar path for broadcasting second part
 
                     clientMap.put(this.clientName, out);//out=output-stream(PrintWriter)
                     System.out.println("[LOG]: " + clientName + " joined using avatar: " + avatarUrl);
@@ -204,7 +204,7 @@ public class Server {
          * Sends the "USERLIST:User1,User2,..." string for sidebar synchronization.
          */
         private void broadcastUserList() {
-            StringBuilder sb = new StringBuilder("USERLIST:");//StringBuilder ist wie ein Char[] der resizable ist
+            StringBuilder sb = new StringBuilder("USERLIST:");//StringBuilder is like a Char[] which is resizable
             for (String name : clientMap.keySet()) {
                 sb.append(name).append(",");
             }
