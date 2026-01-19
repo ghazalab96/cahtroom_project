@@ -295,6 +295,7 @@ public class ChatController {
     @FXML protected void onSendButtonClick() {
         String msg = messageField.getText().trim();
         if (msg.isEmpty() || out == null) return;
+        // the tab which the client is looking at.
         Tab sel = chatTabPane.getSelectionModel().getSelectedItem();
         // Route message based on current active tab (General vs @User)
         if (sel.getText().equals("General")) out.println(msg);
@@ -312,6 +313,7 @@ public class ChatController {
                 final String m = line; Platform.runLater(() -> handleMessageRouting(m)); // Pass data to UI router
             }
         } catch (IOException e) {} finally {
+            // when is running is true, and we are out of while loop, means the server is down.
             if (isRunning) Platform.runLater(this::showErrorPopup); // Trigger error UI if loop breaks
         }
     }
@@ -332,7 +334,7 @@ public class ChatController {
             return;
         }
         if (ipInput.isEmpty() || portInput.isEmpty()) {
-            showLoginError("Connection failed: check IP address and port number");
+            showLoginError("Check IP address and port number");
             return;
         }
 
