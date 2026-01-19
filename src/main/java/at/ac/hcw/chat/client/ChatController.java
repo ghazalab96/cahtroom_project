@@ -106,37 +106,43 @@ public class ChatController {
      * Manages Private Tab creation and switching.
      */
     private void openPrivateTab(String targetUser, boolean shouldFocus) {
+        // Ensure UI updates happen on the JavaFX Application Thread
         Platform.runLater(() -> {
+            // Safety check to ensure the active controller and its tab pane are initialized
             if (activeController == null || activeController.chatTabPane == null) return;
-
             // If the tab is already open, just switch to it if requested
             if (tabMap.containsKey(targetUser)) {
+                // If it exists and focus is requested, switch to that existing tab
                 if (shouldFocus) activeController.chatTabPane.getSelectionModel().select(tabMap.get(targetUser));
-                return;
+                return; // Exit as we don't need to create a duplicate tab
             }
 
             // Create new graphical containers for the private chat
             VBox privateBox = new VBox(15);
             privateBox.setStyle("-fx-background-color: white; -fx-padding: 15;");
+            // Wrap the VBox in a ScrollPane to allow navigating through long conversations
             ScrollPane scrollPane = new ScrollPane(privateBox);
             scrollPane.setFitToWidth(true);
             scrollPane.setStyle("-fx-background-color: white;");
 
-            // Create the Tab object
+            // Create the actual Tab UI element with the target username as the title
             Tab newTab = new Tab(targetUser, scrollPane);
-            newTab.setClosable(true);
+            newTab.setClosable(true); // Allow the user to manually close the conversation tab
 
             // Cleanup maps when user closes the tab
             newTab.setOnClosed(e -> {
-                privateChatLog.remove(targetUser);
-                tabMap.remove(targetUser);
+                privateChatLog.remove(targetUser); // Remove the message log container from memory
+                tabMap.remove(targetUser); // Remove the tab reference from the map
             });
 
+            // Add the newly created tab to the main UI TabPane
             activeController.chatTabPane.getTabs().add(newTab);
+
+            // Store the VBox and Tab in maps for easy access when routing incoming messages
             privateChatLog.put(targetUser, privateBox);
             tabMap.put(targetUser, newTab);
 
-            // Switch to the new tab if requested
+            // If the 'shouldFocus' flag is true, immediately bring this new tab to the front
             if (shouldFocus) activeController.chatTabPane.getSelectionModel().select(newTab);
         });
     }
@@ -145,7 +151,9 @@ public class ChatController {
      * Programmatically builds a Telegram-style message bubble.
      */
     private void addMessageBubble(VBox container, String name, String avatarPath, String message, boolean isSelf) {
+        // Basic null check to prevent errors if the target container isn't ready
         if (container == null) return;
+        // UI updates must be scheduled on the JavaFX Application Thread
         Platform.runLater(() -> {
             try {
                 // Safely load the avatar image
@@ -156,16 +164,18 @@ public class ChatController {
                 // Configure the avatar display
                 ImageView avatarView = new ImageView(new Image(is));
                 avatarView.setFitHeight(40); avatarView.setFitWidth(40);
+                // Apply a circular clip to transform the square image into a round profile picture
                 avatarView.setClip(new Circle(20, 20, 20));
 
-                // Create name and timestamp label
+                // Create a label containing the sender's name and the current system time
                 Label nameLbl = new Label(name + "  " + LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
+                // Apply CSS styling for a small, bold, and greyish professional look
                 nameLbl.setStyle("-fx-font-size: 9px; -fx-text-fill: #90A4AE; -fx-font-weight: bold;");
 
                 // Create message content label
                 Label msgContent = new Label(message);
+                // Enable text wrapping and set a maximum width so long messages don't stretch the UI
                 msgContent.setWrapText(true); msgContent.setMaxWidth(300);
-
 
                 // Build the message bubble (VBox)
                 VBox bubble = new VBox(3, nameLbl, msgContent);
@@ -196,37 +206,52 @@ public class ChatController {
      * Preserves Red Bullet notifications and Private Chat routing.
      */
     private void handleMessageRouting(String packet) {
+        // Basic safety check: ensure the UI controller is loaded before processing
         if (activeController == null) return;
 
         // Update the sidebar user list
         if (packet.startsWith("USERLIST:")) {
+            // Remove the prefix and split the string by commas to get individual names
             String[] users = packet.substring(9).split(",");
+            // Clear the existing items in the sidebar list
             activeController.userListView.getItems().clear();
+            // Add each non-empty username to the visual list view
             for (String u : users) if (!u.isEmpty()) activeController.userListView.getItems().add(u);
         }
         // Handle chat messages separated by the Pipe "|" character
         else if (packet.contains("|")) {
-            String[] parts = packet.split("\\|"); // Split into Header, Avatar, and Message
+            // Split the packet into Header (0), Avatar Path (1), and Message Content (2)
+            String[] parts = packet.split("\\|");
+            // Validate that we have all three necessary components
             if (parts.length < 3) return;
-            String header = parts[0]; String avatar = parts[1]; String text = parts[2];
+            String header = parts[0];
+            String avatar = parts[1];
+            String text = parts[2];
 
             // Scenario 1: Private Message Error (User offline) -> ROUTE TO PRIVATE TAB
             if (header.startsWith("[Private Error ")) {
+                // Extract the target username from the header string
                 String target = header.substring(15, header.length() - 1);
+                // Open the private chat tab for this user if it's not already visible
                 openPrivateTab(target, false); // Ensure tab is open
                 Platform.runLater(() -> {
                     VBox box = privateChatLog.get(target);
+                    // Display the error message inside the specific private chat box
                     if (box != null) addMessageBubble(box, "System", avatar, text, false);
                 });
             }
             // Scenario 2: Incoming Private Message from someone else
             else if (header.startsWith("[Private from ")) {
+                // Identify who sent the message
                 String sender = header.substring(14, header.length() - 1);
+                // Ensure the chat tab for this sender exists
                 openPrivateTab(sender, false);
                 Platform.runLater(() -> {
                     VBox box = privateChatLog.get(sender);
                     if (box != null) {
+                        // Add the sender's message bubble to the private log
                         addMessageBubble(box, sender, avatar, text, false);
+                        // Trigger a visual notification (e.g., red dot) on the sender's tab
                         notifyTab(sender);
                     }
                 });
@@ -234,18 +259,22 @@ public class ChatController {
 
             // Scenario 3: Confirmation of your own private message
             else if (header.startsWith("[Private to ")) {
+                // Identify the recipient
                 String target = header.substring(12, header.length() - 1);
                 openPrivateTab(target, false);
                 Platform.runLater(() -> {
                     VBox box = privateChatLog.get(target);
+                    // Add your own message to the private tab as the 'Self' bubble
                     if (box != null) addMessageBubble(box, userName, currentAvatarPath, text, true);
                 });
             }
 
             // Scenario 4: Public Chat
             else {
+                // Determine if the message was sent by the current user or someone else
                 boolean isSelf = header.equals(userName);
                 if (activeController.chatBox != null) {
+                    // Route the message to the main public chat container
                     addMessageBubble(activeController.chatBox, header, avatar, text, isSelf);
 
                     // Show red dot on General tab if someone else messaged while you were in a PV
