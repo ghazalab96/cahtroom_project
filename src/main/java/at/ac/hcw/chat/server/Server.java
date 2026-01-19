@@ -184,10 +184,7 @@ public class Server {
                     targetWriter.println("[Private from " + clientName + "]|" + this.avatarUrl + "|" + messageContent);
                     out.println("[Private to " + targetName + "]|" + this.avatarUrl + "|" + messageContent);
                 } else {
-                    /*
-                     * FIX: Send a formatted packet back to the sender.
-                     * This tells the client to put the error inside the specific private tab.
-                     */
+
                     out.println("[Private Error " + targetName + "]|/at/ac/hcw/chat/client/images/profile0.jpeg|User is currently offline.");
                 }
             } catch (Exception e) {
