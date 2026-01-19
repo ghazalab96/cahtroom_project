@@ -1,79 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--gibt Version und 8 Zeichensatz,wichtig damit Texte richtig gelesen werden -->
 
-<!--
-    Login View FXML: The entry point UI for the chat application.
-    This file defines the layout for server credentials (IP/Port) and user identification.
--->
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<!--
-    VBox: The root container, stacking elements vertically.
-    spacing="20": Vertical gap between the title, the input fields, and the button.
-    alignment="CENTER": Centers all UI elements within the window.
-    style:
-        -fx-background-color: #F4F7F9 (Muted grey-blue background).
-        -fx-background-radius: 20 (Soft rounded edges for the overall window content).
-    fx:controller: Links this view to the ChatController Java class.
--->
+<!--macht Klassen verfügbar, Ohne control.* → Button, Label,... funktionieren nicht-->
+
 <VBox spacing="20" alignment="CENTER"
+
       style="-fx-background-color: #F4F7F9; -fx-background-radius: 20;"
       xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="at.ac.hcw.chat.client.ChatController">
+    <!--Verbindet dieses FXML mit der Java-Klasse ChatController-->
+    <!-- Nur UserInterface, kein Einfluss auf Logik oder Performance.-->
 
-    <!-- padding: Adds a 40-pixel buffer around all sides to prevent elements from touching the window edges -->
+
     <padding>
         <Insets top="40" right="40" bottom="40" left="40"/>
     </padding>
+<!--•	Fügt Innenabstand hinzu - 40px zu jedem Rand ➡ Verhindert, dass UI am Fensterrand klebt-->
 
-    <!-- Main Application Title -->
     <Label text="HCW Chat Room" textFill="#546E7A">
         <font>
             <Font name="System Bold" size="22.0"/>
         </font>
     </Label>
 
-    <!--
-        Inner VBox: Groups the labels and TextFields together.
-        maxWidth="250": Keeps the input form narrow and centered, regardless of window size.
-    -->
+    <!-- (Font) Nutzt System-Schrift, ➡ Titel wird visuell hervorgehoben-->
+
     <VBox spacing="10" maxWidth="250">
-        <!-- Server IP Input -->
+
         <Label text="Server IP" textFill="#78909C" />
         <TextField fx:id="ipField" text="127.0.0.1"
                    style="-fx-background-radius: 15; -fx-padding: 8; -fx-border-color: #CFD8DC; -fx-border-radius: 15; -fx-background-insets: 0;"/>
 
-        <!-- Server Port Input -->
+        <!--Analog zum IP-Label: Zeigt die Beschriftung für den Netzwerk-Port an-->
         <Label text="Port" textFill="#78909C" />
         <TextField fx:id="portField" text="12345"
                    style="-fx-background-radius: 15; -fx-padding: 8; -fx-border-color: #CFD8DC; -fx-border-radius: 15; -fx-background-insets: 0;"/>
 
-        <!-- Username Input -->
+        <!-- Erzeugt die Beschriftung für das Namensfeld, -->
         <Label text="Your Name" textFill="#78909C" />
         <TextField fx:id="nameField" promptText="Enter name"
-                   style="-fx-background-radius: 15; -fx-padding: 8; -fx-border-color: #CFD8DC; -fx-border-radius: 15; -fx-background-insets: 0;"/>
+                   style="-fx-background-radius: 15; -fx-padding: 8; -fx-border-color: #CFD8DC;
+                   -fx-border-radius: 15; -fx-background-insets: 0;"/>
     </VBox>
 
-    <!--
-        Connect Button:
-        onAction="#onConnectButtonClick": Executes the connection logic in the Java controller.
-        prefWidth/Height: Ensures the button is large and easy to click.
-        style:
-            -fx-background-color: #78909C (Muted primary theme color).
-            -fx-background-radius: 20 (Strongly rounded corners).
-            -fx-cursor: hand (Shows the pointer as a hand for better user feedback).
-    -->
 
+<!--verknüpft den Button-Klick mit der Java-Methode onConnectButtonClick()-->
     <Button fx:id="connectButton" text="Connect" onAction="#onConnectButtonClick"
             prefWidth="250" prefHeight="40"
-            style="-fx-background-color: #78909C; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-weight: bold; -fx-cursor: hand;"/>
+            style="-fx-background-color: #78909C; -fx-text-fill: white; -fx-background-radius: 20;
+            -fx-font-weight: bold; -fx-cursor: hand;"/>
 
-    <!--
-        Status Label:
-        fx:id="statusLabel": Used by the controller to display "Please enter your name!"
-        or "Connection failed!" messages in real-time.
-    -->
+
     <Label fx:id="statusLabel" text="Ready" textFill="#90A4AE" />
 </VBox>

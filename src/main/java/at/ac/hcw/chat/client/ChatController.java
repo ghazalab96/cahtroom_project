@@ -324,7 +324,7 @@ public class ChatController {
      */
     @FXML
     protected void onConnectButtonClick() {
-        String nameInput = nameField.getText().trim();
+        String nameInput = nameField.getText().trim();//trim() --> wenn es leerzeichen gibt wird gelöscht
         String ipInput = ipField.getText().trim();
         String portInput = portField.getText().trim();
 
@@ -403,15 +403,15 @@ public class ChatController {
             new Thread(() -> {
                 try {
                     Thread.sleep(500); // Wait for UI to settle
-                    socket = new Socket(tempIP, tempPort);
+                    socket = new Socket(tempIP, tempPort);//server ip und port
                     out = new PrintWriter(socket.getOutputStream(), true);
                     in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     // Send initial handshake packet: "Name|AvatarPath"
-                    out.println(userName + "|" + currentAvatarPath);
+                    out.println(userName + "|" + currentAvatarPath);//sendet Anmelde informationen an server
                     isRunning = true;
-                    new Thread(this::listenToServer).start();
+                    new Thread(this::listenToServer).start();//startet einen thread der hört zu server
                 } catch (Exception ex) { ex.printStackTrace(); }
-            }).start();
+            }).start();//startet thread
         } catch (Exception ex) { ex.printStackTrace(); }
     }
 
@@ -428,12 +428,12 @@ public class ChatController {
 
                 // 1. Find the current stage (window) and close it
                 Stage currentStage = null;
-                if (chatTabPane != null && chatTabPane.getScene() != null) {
+                if (chatTabPane != null && chatTabPane.getScene() != null) {//prüft ob wir in chat scene sind
                     currentStage = (Stage) chatTabPane.getScene().getWindow();
                 } else {
                     // Fallback: Find any open window to close
                     List<Window> openWindows = Window.getWindows();
-                    if (!openWindows.isEmpty()) currentStage = (Stage) openWindows.get(0);
+                    if (!openWindows.isEmpty()) currentStage = (Stage) openWindows.get(0);//erste offene seite wird geschlossen
                 }
 
                 if (currentStage != null) currentStage.close();
@@ -454,7 +454,7 @@ public class ChatController {
     }
 
     @FXML protected void onDisconnectButtonClick(ActionEvent event) {
-        isRunning = false;
+        isRunning = false;//stoppt der listener-Thread
         try {
             if (socket != null) socket.close();
             privateChatLog.clear(); tabMap.clear();
@@ -471,7 +471,7 @@ public class ChatController {
         s.setScene(new Scene(l.load()));
         ChatController next = l.getController();
         activeController = next; // Register the new scene's controller
-        if (p.contains("chat-view")) {
+        if (p.contains("chat-view")) {//if the next page would be chat-page
             next.welcomeLabel.setText("User: " + userName);
             next.userAvatarImage.setImage(new Image(getClass().getResourceAsStream(currentAvatarPath)));
         }
@@ -486,8 +486,8 @@ public class ChatController {
                 Stage current;
                 if (ipField != null) current = (Stage) ipField.getScene().getWindow();
                 else if (selectedAvatarPreview != null) current = (Stage) selectedAvatarPreview.getScene().getWindow();
-                else current = (Stage) Window.getWindows().get(0);
-                switchSceneOnStage(current, p);
+                else current = (Stage) Window.getWindows().get(0);//holt das erste offene java fenster
+                switchSceneOnStage(current, p);//p ist das pfad von neue fxml
             } catch (Exception e) { e.printStackTrace(); }
         });
     }

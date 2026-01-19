@@ -18,11 +18,11 @@ public class Server {
      * clientMap: Stores active users.
      * Key: Username (String) | Value: Their specific output stream (PrintWriter)
      */
-    private static final Map<String, PrintWriter> clientMap = new ConcurrentHashMap<>();
+    private static final Map<String, PrintWriter> clientMap = new ConcurrentHashMap<>();//Hashmap --> sicherer für mehrere threads gleichzeitig
 
     public static void main(String[] args) {
         // Force the JVM to prioritize IPv4 over IPv6 for local network discovery
-        System.setProperty("java.net.preferIPv4Stack", "true");
+        System.setProperty("java.net.preferIPv4Stack", "true");//erzwungen auf ipv4
 
         // Scanner reads from Standard Input (Keyboard) for admin configuration
         Scanner scanner = new Scanner(System.in);
@@ -36,7 +36,7 @@ public class Server {
             port = Integer.parseInt(scanner.nextLine());
         } catch (NumberFormatException e) {
             System.err.println("Invalid port! Defaulting to 888.");
-            port = 888;
+            port = 888;//default port
         }
 
         // IP Discovery to help users know where to connect
@@ -60,10 +60,10 @@ public class Server {
             while (true) {
                 // Blocking call: execution pauses here until a client joins
                 Socket clientSocket = serverSocket.accept();
-                System.out.println("[CONNECT]: Connection established with " + clientSocket.getInetAddress());
+                System.out.println("[CONNECT]: Connection established with " + clientSocket.getInetAddress());//get ip address from client
 
                 // Hand off the new connection to a dedicated Thread (ClientHandler)
-                new ClientHandler(clientSocket).start();
+                new ClientHandler(clientSocket).start();//wird run() von ClientHandler ausgeführt
             }
         } catch (IOException e) {
             System.err.println("Critical Socket Error: " + e.getMessage());
@@ -114,7 +114,7 @@ public class Server {
             try {
                 // Initialize character-based communication streams
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
+                out = new PrintWriter(socket.getOutputStream(), true);//boolean= auto flush (ohne flush wartet client ewig)
 
                 /*
                  * STEP 1: LOGIN PROTOCOL
@@ -125,10 +125,10 @@ public class Server {
                 if (loginLine != null && loginLine.contains("|")) {
                     // \\| is needed because the Pipe character is a regex reserved symbol
                     String[] parts = loginLine.split("\\|");
-                    this.clientName = parts[0];
-                    this.avatarUrl = parts[1]; // Store the avatar path for broadcasting
+                    this.clientName = parts[0];//erste teil
+                    this.avatarUrl = parts[1]; // Store the avatar path for broadcasting  zweite teil
 
-                    clientMap.put(this.clientName, out);
+                    clientMap.put(this.clientName, out);//out=output-stream(PrintWriter)
                     System.out.println("[LOG]: " + clientName + " joined using avatar: " + avatarUrl);
 
                     broadcastUserList(); // Sync sidebar for all users
@@ -178,7 +178,7 @@ public class Server {
                 String targetName = rawMessage.substring(1, firstColon).trim();
                 String messageContent = rawMessage.substring(firstColon + 1).trim();
 
-                PrintWriter targetWriter = clientMap.get(targetName);
+                PrintWriter targetWriter = clientMap.get(targetName);//returns Value of Key
                 if (targetWriter != null) {
                     // Success: Send to target and sender
                     targetWriter.println("[Private from " + clientName + "]|" + this.avatarUrl + "|" + messageContent);
@@ -204,7 +204,7 @@ public class Server {
          * Sends the "USERLIST:User1,User2,..." string for sidebar synchronization.
          */
         private void broadcastUserList() {
-            StringBuilder sb = new StringBuilder("USERLIST:");
+            StringBuilder sb = new StringBuilder("USERLIST:");//StringBuilder ist wie ein Char[] der resizable ist
             for (String name : clientMap.keySet()) {
                 sb.append(name).append(",");
             }
