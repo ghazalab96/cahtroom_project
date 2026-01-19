@@ -357,14 +357,15 @@ public class ChatController {
         String ipInput = ipField.getText().trim();
         String portInput = portField.getText().trim();
 
-        // 1. Basic validation: Check if any field is empty
+        // 1. Basic validation: Check if any field is empty,username must not be empty
         if (nameInput.isEmpty()) {
             showLoginError("Please enter your name!");
-            return;
+            return;// stop execution if validation fails
         }
+        // Basic validation: IP address and port must not be empty
         if (ipInput.isEmpty() || portInput.isEmpty()) {
             showLoginError("Check IP address and port number");
-            return;
+            return;// stop execution if validation fails
         }
 
         /*
@@ -372,9 +373,9 @@ public class ChatController {
          * We attempt a real connection test. If this fails, the user cannot see the avatars.
          */
         try {
-            int port = Integer.parseInt(portInput);
+            int port = Integer.parseInt(portInput); //Change port to number
 
-            // Create an un-connected socket
+            // Creates an empty socket
             Socket testSocket = new Socket();
 
             /*
@@ -396,6 +397,7 @@ public class ChatController {
 
         } catch (NumberFormatException e) {
             showLoginError("Check IP address and port number");
+            // Port is not a valid number
         } catch (java.net.UnknownHostException e) {
             // This catches cases where the IP address format is invalid
             showLoginError("Invalid IP address format");
@@ -410,8 +412,11 @@ public class ChatController {
      */
     private void showLoginError(String message) {
         Platform.runLater(() -> {
+            // Safety check: statusLabel exists only in the login view
             if (statusLabel != null) {
+                // Display the error message to the user
                 statusLabel.setText(message);
+                // Highlight the message in red to indicate an error
                 statusLabel.setStyle("-fx-text-fill: #E57373;"); // Muted soft red
             }
         });
@@ -450,24 +455,26 @@ public class ChatController {
      */
 
     private void showErrorPopup() {
+        // Ensure that all UI operations run on the JavaFX Application Thread
         Platform.runLater(() -> {
-            try {
+            try {  // Stop the server listener thread & close the active socket connection if it exists
                 isRunning = false;
                 if (socket != null) socket.close();
 
-                // 1. Find the current stage (window) and close it
+
                 Stage currentStage = null;
-                if (chatTabPane != null && chatTabPane.getScene() != null) {//check if wir are in chat scene
+                // Check if we are currently inside the chat scene
+                if (chatTabPane != null && chatTabPane.getScene() != null) {
                     currentStage = (Stage) chatTabPane.getScene().getWindow();
                 } else {
-                    // Fallback: Find any open window to close
+                    // Fallback: close the first available open window
                     List<Window> openWindows = Window.getWindows();
                     if (!openWindows.isEmpty()) currentStage = (Stage) openWindows.get(0);//closes first open page
                 }
-
+                // Close the current application window
                 if (currentStage != null) currentStage.close();
 
-                // 2. Open the Error View as a fresh, independent window
+                // 2.Open the Error View as a fresh, independent window
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/at/ac/hcw/chat/client/error-view.fxml"));
                 Parent root = loader.load();
                 Stage errorStage = new Stage();
@@ -477,6 +484,7 @@ public class ChatController {
                 errorStage.show();
 
             } catch (IOException e) {
+                // Log error if the error view cannot be loaded
                 System.err.println("Failed to display error popup: " + e.getMessage());
             }
         });
@@ -485,10 +493,15 @@ public class ChatController {
     @FXML protected void onDisconnectButtonClick(ActionEvent event) {
         isRunning = false;//stops the listener thread
         try {
+            // Close the network socket if it exists
             if (socket != null) socket.close();
+            // Clear all stored private chat data
             privateChatLog.clear(); tabMap.clear();
+            //Determine the current application window (Stage) based on the UI element that triggered the event
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            // Switch back to the login view using the same window
             switchSceneOnStage(stage, "/at/ac/hcw/chat/client/login-view.fxml");
+            // Log unexpected errors without crashing the application
         } catch (Exception e) { e.printStackTrace(); }
     }
 
