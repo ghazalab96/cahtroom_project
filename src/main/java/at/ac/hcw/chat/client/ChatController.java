@@ -353,7 +353,7 @@ public class ChatController {
      */
     @FXML
     protected void onConnectButtonClick() {
-        String nameInput = nameField.getText().trim();//trim() --> wenn es leerzeichen gibt wird gelöscht
+        String nameInput = nameField.getText().trim();//trim() --> all the spaces are deleted
         String ipInput = ipField.getText().trim();
         String portInput = portField.getText().trim();
 
@@ -436,11 +436,11 @@ public class ChatController {
                     out = new PrintWriter(socket.getOutputStream(), true);
                     in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     // Send initial handshake packet: "Name|AvatarPath"
-                    out.println(userName + "|" + currentAvatarPath);//sendet Anmelde informationen an server
+                    out.println(userName + "|" + currentAvatarPath);
                     isRunning = true;
-                    new Thread(this::listenToServer).start();//startet einen thread der hört zu server
+                    new Thread(this::listenToServer).start();//starts a thread that listens to server
                 } catch (Exception ex) { ex.printStackTrace(); }
-            }).start();//startet thread
+            }).start();//starts the thread
         } catch (Exception ex) { ex.printStackTrace(); }
     }
 
@@ -457,12 +457,12 @@ public class ChatController {
 
                 // 1. Find the current stage (window) and close it
                 Stage currentStage = null;
-                if (chatTabPane != null && chatTabPane.getScene() != null) {//prüft ob wir in chat scene sind
+                if (chatTabPane != null && chatTabPane.getScene() != null) {//check if wir are in chat scene
                     currentStage = (Stage) chatTabPane.getScene().getWindow();
                 } else {
                     // Fallback: Find any open window to close
                     List<Window> openWindows = Window.getWindows();
-                    if (!openWindows.isEmpty()) currentStage = (Stage) openWindows.get(0);//erste offene seite wird geschlossen
+                    if (!openWindows.isEmpty()) currentStage = (Stage) openWindows.get(0);//closes first open page
                 }
 
                 if (currentStage != null) currentStage.close();
@@ -483,7 +483,7 @@ public class ChatController {
     }
 
     @FXML protected void onDisconnectButtonClick(ActionEvent event) {
-        isRunning = false;//stoppt der listener-Thread
+        isRunning = false;//stops the listener thread
         try {
             if (socket != null) socket.close();
             privateChatLog.clear(); tabMap.clear();
@@ -515,8 +515,8 @@ public class ChatController {
                 Stage current;
                 if (ipField != null) current = (Stage) ipField.getScene().getWindow();
                 else if (selectedAvatarPreview != null) current = (Stage) selectedAvatarPreview.getScene().getWindow();
-                else current = (Stage) Window.getWindows().get(0);//holt das erste offene java fenster
-                switchSceneOnStage(current, p);//p ist das pfad von neue fxml
+                else current = (Stage) Window.getWindows().get(0);//gets the first open page
+                switchSceneOnStage(current, p);//p is the path of new page
             } catch (Exception e) { e.printStackTrace(); }
         });
     }
